@@ -1,0 +1,43 @@
+name: 'Build ReactJS GitHub Actions'
+branding:
+  icon: 'terminal'
+  color: 'orange'
+inputs:
+  node-version:
+    description: 'NodeJS version to use'
+    required: false
+    default: 16
+  workspace:
+    description: 'Relative path under $GITHUB_WORKSPACE to place the project'
+    required: false
+    default: .
+runs:
+  using: 'composite'
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Setup NodeJS
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ inputs.node-version }}
+
+    - name: Build Project 
+      run: |
+        cd ${{ inputs.workspace }}
+        export GITHUB_EVENT_NAME=${{ github.event_name }}
+        npm ci
+        if [ $GITHUB_EVENT_NAME == "pull_request" ]; then
+          npm run build:${{ github.base_ref }}
+        else
+          npm run build:${{ github.ref_name }}
+        fi  
+        mv build dist
+      shell: bash
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v3
+      if: ${{ github.event_name == 'push'}}
+      with:
+        name: dist
+        path: ${{ inputs.workspace }}/dist
