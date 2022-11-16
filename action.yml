@@ -25,6 +25,7 @@ runs:
     - name: Build Project 
       run: |
         cd ${{ inputs.workspace }}
+        unset CI
         export GITHUB_EVENT_NAME=${{ github.event_name }}
         npm ci
         if [ $GITHUB_EVENT_NAME == "pull_request" ]; then
